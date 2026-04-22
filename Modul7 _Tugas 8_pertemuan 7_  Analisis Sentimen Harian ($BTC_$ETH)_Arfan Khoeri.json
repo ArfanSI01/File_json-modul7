@@ -1,0 +1,448 @@
+{
+  "name": "Modul7 _Tugas 8_pertemuan 7_  Analisis Sentimen Harian ($BTC_$ETH)_Arfan Khoeri",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "xiaomi/mimo-v2-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        496,
+        112
+      ],
+      "id": "ad060b4b-e1f7-4ae2-8fdf-35e8bb6974da",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "8Bpzb0zXgYwnzgVd",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the sentiment of the following tweet. Respond ONLY with ONE word: 'Positive', 'Negative', or 'Neutral'.\n\nTweet:\n{{ $json.text }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        496,
+        -48
+      ],
+      "id": "4211d7f9-a459-4c05-8d9f-00e5c473486a",
+      "name": "Analisis Sentimen"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "=1QrjTpCIDMJ22PRUFq-pj3LxAi6p99Qfp9oBeC1pmJF0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Data Mentah",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QrjTpCIDMJ22PRUFq-pj3LxAi6p99Qfp9oBeC1pmJF0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Column 4": "={{ $json.text }}",
+            "Timestamp": "={{ $now.toFormat(\"yyyy-MM-dd HH:mm:ss\") }}",
+            "Tweet_ID": "={{ $('Mengambil Data X').item.json.id }}",
+            "Tweet_Text": "={{ $('Mengambil Data X').item.json.text }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Tweet_ID",
+              "displayName": "Tweet_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Tweet_Text",
+              "displayName": "Tweet_Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Column 4",
+              "displayName": "Column 4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Column 5",
+              "displayName": "Column 5",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Column 6",
+              "displayName": "Column 6",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        864,
+        -48
+      ],
+      "id": "017bc467-ab58-483e-84f2-bcdfc3684cf4",
+      "name": "Penyimpanan Hasil",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GLcblT1NlEdQVQyA",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "searchText": "=$BTC\" OR \"$ETH\" -\nis:retweet lang:en ",
+        "limit": 20,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        256,
+        -240
+      ],
+      "id": "fb3f85a9-9506-44c9-b6e6-61c199eca567",
+      "name": "Mengambil Data",
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "5FT9eUIg3sVHZcsm",
+          "name": "X account_Mz"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        -48
+      ],
+      "id": "c06647a0-8f4b-494d-9500-074f9f08b5ce",
+      "name": "Tiap 15 Menit"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "=1QrjTpCIDMJ22PRUFq-pj3LxAi6p99Qfp9oBeC1pmJF0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Data Mentah",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QrjTpCIDMJ22PRUFq-pj3LxAi6p99Qfp9oBeC1pmJF0/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        272
+      ],
+      "id": "bdab9653-dce1-47a6-8938-d79af2280389",
+      "name": "Penyimpanan Hasil1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GLcblT1NlEdQVQyA",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let positive = 0, negative = 0, neutral = 0;\n\n// Loop melalui setiap baris data dari Google Sheets [cite: 335, 341]\nfor (const item of items) {\n  // Pastikan 'Sentiment' sesuai dengan nama header kolom di Sheets kamu [cite: 336, 341]\n  const sentiment = item.json.Sentiment; \n  \n  if (sentiment === 'Positive') positive++;\n  else if (sentiment === 'Negative') negative++;\n  else if (sentiment === 'Neutral') neutral++;\n}\n\nconst total = items.length; // Hitung total tweet [cite: 334, 341]\n\n// Kembalikan hasil perhitungan ke node selanjutnya [cite: 337, 341]\nreturn { positive, negative, neutral, total };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        272
+      ],
+      "id": "5a7a78a8-b0df-41a3-8888-d8459e5597bd",
+      "name": "Analisis Data"
+    },
+    {
+      "parameters": {
+        "chatId": "=8085407373",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        976,
+        272
+      ],
+      "id": "0f821193-f4a8-4cd6-ab53-a2732db8f493",
+      "name": "Kirim Laporan",
+      "webhookId": "042de043-aa0f-4b05-ac9f-b56f00225865",
+      "credentials": {
+        "telegramApi": {
+          "id": "v38guK5huOk3UnGd",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "xiaomi/mimo-v2-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        656,
+        448
+      ],
+      "id": "3167c54a-c1ab-45cc-a317-001504567bcd",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "8Bpzb0zXgYwnzgVd",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        272
+      ],
+      "id": "d323e485-52ff-43c8-a649-c98bb8e9b7b9",
+      "name": "Tiap 7 Pagi"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { id: \"MOCK-001\", text: \"Bitcoin is going to the moon today! $BTC\" } },\n  { json: { id: \"MOCK-002\", text: \"Ethereum price is dropping, very disappointed. $ETH\" } },\n  { json: { id: \"MOCK-003\", text: \"Just a normal day in the crypto market. #crypto\" } }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        -48
+      ],
+      "id": "7c347a49-baa8-49cb-baaf-ddf213e4a646",
+      "name": "Mengambil Data X"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Anda adalah seorang analis sentimen media sosial. Tuliskan kesimpulan singkat dalam Bahasa Indonesia untuk laporan Telegram berdasarkan data statistik harian berikut:\n\n- Total Tweet dianalisis: {{ $json.total }}\n- Sentimen Positif: {{ $json.positive }}\n- Sentimen Negatif: {{ $json.negative }}\n- Sentimen Netral: {{ $json.neutral }}\n\nBerikan analisis kualitatif tentang kondisi pasar saat ini.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        656,
+        272
+      ],
+      "id": "a9bab380-7c67-4ff8-9514-89b94283d19f",
+      "name": "Membuat Kesimpulan"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analisis Sentimen",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analisis Sentimen": {
+      "main": [
+        [
+          {
+            "node": "Penyimpanan Hasil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Penyimpanan Hasil": {
+      "main": [
+        []
+      ]
+    },
+    "Mengambil Data": {
+      "main": [
+        []
+      ]
+    },
+    "Tiap 15 Menit": {
+      "main": [
+        [
+          {
+            "node": "Mengambil Data X",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Penyimpanan Hasil1": {
+      "main": [
+        [
+          {
+            "node": "Analisis Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analisis Data": {
+      "main": [
+        [
+          {
+            "node": "Membuat Kesimpulan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Membuat Kesimpulan",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tiap 7 Pagi": {
+      "main": [
+        [
+          {
+            "node": "Penyimpanan Hasil1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mengambil Data X": {
+      "main": [
+        [
+          {
+            "node": "Analisis Sentimen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Membuat Kesimpulan": {
+      "main": [
+        [
+          {
+            "node": "Kirim Laporan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "09715898-3923-4b97-98c8-45424450caa8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4ab2e820f183119a1cff325c1627456cb8157705ca3c559ce30aafaab9ef8286"
+  },
+  "id": "qrVGTkXj51AWDsDe",
+  "tags": []
+}
