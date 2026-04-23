@@ -1,0 +1,441 @@
+{
+  "name": "Modul7 _Tugas 9_pertemuan 8_  Multi-Asset RSI & MA Crossover Alerts _Arfan Khoeri copy",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        512,
+        112
+      ],
+      "id": "51b78c70-dc43-42ba-a8b8-469604f7faaf",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://query1.finance.yahoo.com/v8/finance/chart/\" + $json.symbols[0] + \"?interval=1d&range=1mo\" }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "1y"
+            },
+            {
+              "name": "Interval",
+              "value": "1d"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "user-agen",
+              "value": "Mozilla/5.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        960,
+        -80
+      ],
+      "id": "bac79afe-65b8-4cd7-be2c-87e1a2dd91d1",
+      "name": "AAPL"
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://query1.finance.yahoo.com/v8/finance/chart/\" + $json.symbols[1] + \"?interval=1d&range=1mo\" }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "6mo"
+            },
+            {
+              "name": "Interval",
+              "value": "1d"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "user-agen",
+              "value": "Mozilla/5.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        960,
+        112
+      ],
+      "id": "50168ffe-b7dc-43a5-ae2c-29646bb53a3f",
+      "name": "TSLA"
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://query1.finance.yahoo.com/v8/finance/chart/\" + $json.symbols[2] + \"?interval=1d&range=1mo\" }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "6mo"
+            },
+            {
+              "name": "Interval",
+              "value": "1d"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "user-agen",
+              "value": "Mozilla/5.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        960,
+        288
+      ],
+      "id": "6cb1febb-be02-4f2e-aceb-9771e9a34779",
+      "name": "MSFT"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1312,
+        96
+      ],
+      "id": "1f237c63-03fa-496d-96ea-2f2e6c225fa3",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        464
+      ],
+      "id": "f06c2a92-2f4e-49e0-86ac-493fdd43e3b5",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Definisikan Rumus Matematika (Harus di paling atas)\nfunction calculateSMA(data, period) {\n    if (data.length < period) return null;\n    const subset = data.slice(-period);\n    const sum = subset.reduce((a, b) => a + b, 0);\n    return sum / period;\n}\n\nfunction calculateRSI(data, period = 14) {\n    if (data.length <= period) return null;\n    let gains = 0, losses = 0;\n    for (let i = data.length - period; i < data.length; i++) {\n        const diff = data[i] - data[i - 1];\n        if (diff >= 0) gains += diff;\n        else losses -= diff;\n    }\n    const rs = (gains / period) / (losses / period);\n    return 100 - (100 / (1 + rs));\n}\n\n// 2. Logika Utama untuk Memproses Data\nconst results = [];\n\nfor (const item of items) {\n    // Navigasi ke data harga Yahoo Finance berdasarkan skema di image_fb9663.jpg\n    const result = item.json.chart.result[0];\n    const prices = result.indicators.quote[0].close.filter(p => p !== null);\n    const lastPrice = prices[prices.length - 1];\n\n    // Hitung Indikator menggunakan fungsi di atas\n    const ma50 = calculateSMA(prices, 50);\n    const ma200 = calculateSMA(prices, 200);\n    const rsi = calculateRSI(prices, 14);\n\n    // Tentukan Sinyal [cite: 46]\n    let signal = \"⚪ Tidak ada sinyal saat ini\";\n    if (ma50 && ma200 && ma50 > ma200) signal = \"🚀 Golden Cross (Bullish)\";\n    else if (rsi && rsi < 30) signal = \"🟢 Oversold (Potensi Beli)\";\n    else if (rsi && rsi > 70) signal = \"🔴 Overbought (Potensi Jual)\";\n\n    // Masukkan hasil ke array final\n    results.push({\n        json: {\n            symbol: result.meta.symbol,\n            price: lastPrice.toFixed(2),\n            rsi: rsi ? rsi.toFixed(2) : \"Data Kurang\",\n            ma50: ma50 ? ma50.toFixed(2) : \"Data Kurang\",\n            ma200: ma200 ? ma200.toFixed(2) : \"Data Kurang\",\n            signal: signal\n        }\n    });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        112
+      ],
+      "id": "821b59f9-c2c8-4fce-9d20-a45b26910815",
+      "name": "Analyze Signals"
+    },
+    {
+      "parameters": {
+        "chatId": "8085407373",
+        "text": "=📊 Symbol: {{ $json.symbol }}\n\n💰 Harga terakhir: {{ $json.price }}\n\n📈 RSI: {{ $json.rsi }}\n\n💹 MA50: {{ $json.ma50 }}\n\n📉 MA200: {{ $json.ma200 }}\n\n🚨 Sinyal: {{ $json.signal }}\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1744,
+        112
+      ],
+      "id": "55862a0b-3f15-492b-8476-85cb8383144e",
+      "name": "Kirim Pesan Tele (Stocks)",
+      "webhookId": "5b36fd39-fb27-4e81-ad13-dcc279a6dafb",
+      "credentials": {
+        "telegramApi": {
+          "id": "v38guK5huOk3UnGd",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?interval=5m&range=1d\" }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "5m"
+            },
+            {
+              "name": "Interval",
+              "value": "1d"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "user-agen",
+              "value": "Mozilla/5.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1056,
+        464
+      ],
+      "id": "10ed8db7-b35a-4934-a5c7-3e9536d3f92f",
+      "name": "BTC/USD"
+    },
+    {
+      "parameters": {
+        "jsCode": "// === Ambil data harga dari Yahoo Finance ===\nconst data = items[0].json.chart?.result?.[0];\nif (!data) {\n  return [{ json: { error: \"❌ Tidak ada data dari Yahoo Finance.\" } }];\n}\n\nconst closes = data.indicators.quote[0].close.filter(v => v !== null);\n\n// === Fungsi bantu ===\nfunction SMA(data, period) {\n  return data.map((_, i, arr) => {\n    if (i < period) return null;\n    const slice = arr.slice(i - period, i);\n    return slice.reduce((a, b) => a + b, 0) / period;\n  });\n}\n\nfunction RSI(data, period = 14) {\n  let gains = [], losses = [];\n  for (let i = 1; i < data.length; i++) {\n    const diff = data[i] - data[i - 1];\n    gains.push(diff > 0 ? diff : 0);\n    losses.push(diff < 0 ? -diff : 0);\n  }\n\n  if (gains.length < period) return null;\n\n  let avgGain = gains.slice(0, period).reduce((a, b) => a + b, 0) / period;\n  let avgLoss = losses.slice(0, period).reduce((a, b) => a + b, 0) / period;\n\n  for (let i = period; i < gains.length; i++) {\n    avgGain = (avgGain * (period - 1) + gains[i]) / period;\n    avgLoss = (avgLoss * (period - 1) + losses[i]) / period;\n  }\n\n  const rs = avgGain / (avgLoss || 1);\n  return 100 - 100 / (1 + rs);\n}\n\n// === Hitung indikator ===\nconst ma50 = SMA(closes, 50);\nconst ma200 = SMA(closes, 200);\n\nconst lastClose = closes.at(-1);\nconst lastMA50 = ma50.at(-1);\nconst lastMA200 = ma200.filter(v => v !== null).at(-1) || lastMA50;\nconst rsi = RSI(closes, 14);\n\n// === Tentukan sinyal ===\nlet signal = \"⚪ Tidak ada sinyal saat ini\";\nif (rsi && rsi < 30) signal = \"🔵 RSI Oversold (Potensi Buy)\";\nelse if (rsi && rsi > 70) signal = \"🔴 RSI Overbought (Potensi Sell)\";\nelse if (lastMA50 > lastMA200) signal = \"🟢 Golden Cross (Buy Signal)\";\nelse if (lastMA50 < lastMA200) signal = \"🔻 Death Cross (Sell Signal)\";\n\n// === Return hasil ===\nreturn [{\n  json: {\n    symbol: data.meta.symbol || \"BTC-USD\",\n    lastClose,\n    rsi: rsi ? rsi.toFixed(2) : null,\n    ma50: lastMA50 ? lastMA50.toFixed(2) : null,\n    ma200: lastMA200 ? lastMA200.toFixed(2) : null,\n    signal\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        464
+      ],
+      "id": "1744baec-4500-4fe7-b654-c9dc6dba9724",
+      "name": "Code In Javascript"
+    },
+    {
+      "parameters": {
+        "chatId": "8085407373",
+        "text": "=📊 [BTC-USD] Sinyal 5m\n\n💰 Harga terakhir: {{$json[\"lastClose\"]}}\n📈 RSI: {{$json[\"rsi\"]}}\n📊 MA50: {{$json[\"ma50\"]}}\n📊 MA200: {{$json[\"ma200\"]}}\n\n🚨 Sinyal: {{$json[\"signal\"]}}\n",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1504,
+        464
+      ],
+      "id": "c25e247b-0d3c-4d13-9ae3-c31b99860d63",
+      "name": "Kirim Pesan Tele (BTC)",
+      "webhookId": "5b36fd39-fb27-4e81-ad13-dcc279a6dafb",
+      "credentials": {
+        "telegramApi": {
+          "id": "v38guK5huOk3UnGd",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"symbols\": [\"AAPL\", \"TSLA\", \"MSFT\"]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        112
+      ],
+      "id": "09a08ece-f3fb-41a1-a059-72fa6434a09a",
+      "name": "Watchllis"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Watchllis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AAPL": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TSLA": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "MSFT": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Analyze Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "BTC/USD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Signals": {
+      "main": [
+        [
+          {
+            "node": "Kirim Pesan Tele (Stocks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BTC/USD": {
+      "main": [
+        [
+          {
+            "node": "Code In Javascript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code In Javascript": {
+      "main": [
+        [
+          {
+            "node": "Kirim Pesan Tele (BTC)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Watchllis": {
+      "main": [
+        [
+          {
+            "node": "AAPL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TSLA",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "MSFT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "0f56e3a3-55e4-40ac-b2c4-627130b501a7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4ab2e820f183119a1cff325c1627456cb8157705ca3c559ce30aafaab9ef8286"
+  },
+  "id": "ojg0Z7O0AiW0M9Tx",
+  "tags": []
+}
